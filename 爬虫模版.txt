@@ -1,0 +1,42 @@
+# 下载一个网页
+import requests
+#正则表达式
+import re
+url = 'https://www.17k.com/list/1398783.html'
+# 模拟浏览器发送http请求
+response =  requests.get(url)
+response.encoding = 'utf-8'
+# 拿到小说的主页面
+html = response.text
+#获取到小说的名字
+title = re.findall(r'<h1 class="Title">(.*?)</h1>',html)[0]
+
+#点击标题可以获取每一章 的信息（标题（a标签中））
+dl = re.findall(r'<span class="tit">第一卷 浅水蛟龙腾云起</span>.*?更新日期:2017-12-25 10:17:38',html,re.S)[0]
+#去掉所有的空格，换行符
+dl = dl.replace('\n','').replace('\t','').replace(' ','')
+#获取到每一章的网址和对应的章节题目
+chapter_info_list = re.findall(r'href="(.*?)".*?<spanclass="ellipsis">(.*?)</span></a>',dl)
+
+fb = open('%s.txt' % title , 'w',encoding='utf-8')
+
+for chapter_info in chapter_info_list:
+
+    # chapter_title = chapter_info[1]
+    # chapter_url = chapter_info[0]
+    #上面写出来可以实现但是繁琐
+    chapter_url, chapter_title = chapter_info
+    chapter_url = "https://www.17k.com%s" % chapter_url
+    #下载章节内容
+    chapter_response = requests.get(chapter_url)
+    chapter_response.encoding = 'utf-8'
+    chapter_html = chapter_response.text
+    chapter_content = re.findall(r'<div class="p">(.*?)<p></p>',chapter_html,re.S)[0]
+    chapter_content = chapter_content.replace('<p>','').replace('\t','').replace(' ','').replace('</p>','').replace('\n','')
+    fb.write(chapter_title)
+    fb.write(chapter_content)
+    fb.write('\n')
+    print(chapter_url,chapter_title)
+
+
+
